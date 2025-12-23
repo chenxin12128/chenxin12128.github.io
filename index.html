@@ -3,431 +3,490 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AEO数智架构图 - 改进版</title>
+    <title>企业认证科数智视界 V10.0 - 全屏自适应版</title>
+    <!-- 引入资源 -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    
     <style>
-        :root {
-            --primary-blue: #3b82f6;
-            --dark-blue: #0f172a;
-            --glow-color: #38bdf8;
-            --text-color: #f1f5f9;
-            --border-radius: 12px;
-            --arrow-color: #60a5fa;
-        }
-
-        /* 动画定义 */
-        @keyframes flow-down {
-            0% { background-position: 0 -10px; opacity: 0.3; }
-            50% { opacity: 1; }
-            100% { background-position: 0 20px; opacity: 0.3; }
-        }
-        @keyframes flow-up {
-            0% { background-position: 0 20px; opacity: 0.3; }
-            50% { opacity: 1; }
-            100% { background-position: 0 -10px; opacity: 0.3; }
-        }
-        @keyframes flow-right {
-            0% { background-position: -10px 0; opacity: 0.3; }
-            100% { background-position: 20px 0; opacity: 0.3; }
-        }
-        @keyframes flow-vertical-line {
-            0% { background-position: 0 -20px; }
-            100% { background-position: 0 20px; }
-        }
-
+        /* === 全局重置 === */
+        * { box-sizing: border-box; outline: none; }
         body {
-            font-family: 'Microsoft YaHei', sans-serif;
-            background-color: var(--dark-blue);
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
+            margin: 0; padding: 0;
+            background-color: #02050b; 
+            overflow: hidden; /* 禁止滚动 */
+            font-family: "Microsoft YaHei", "Helvetica Neue", sans-serif;
+            height: 100vh;
+            width: 100vw;
+            background-image: 
+                radial-gradient(circle at 50% 50%, #111e33 0%, #02050b 100%);
+            color: #fff;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
         }
 
-        header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
+        /* === 布局容器 === */
+        /* 采用 Flex 纵向布局：头部 -> KPI -> 主图表 */
         
-        h1 { margin: 5px 0; font-size: 32px; color: var(--glow-color); text-shadow: 0 0 15px var(--primary-blue); }
-        h2 { margin: 0; font-size: 20px; color: var(--primary-blue); }
-
-        .container {
-            display: grid;
-            grid-template-columns: 200px 1fr 220px;
-            gap: 30px;
-            max-width: 1300px;
+        /* 1. 顶部 Header (高度占比 7% - 8%) */
+        .header {
+            flex: 0 0 8vh; /* 固定高度占比 */
             width: 100%;
+            background: linear-gradient(to bottom, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.0));
+            border-bottom: 1px solid rgba(34, 211, 238, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
             position: relative;
+            box-shadow: 0 0 20px rgba(34, 211, 238, 0.1);
+        }
+        /* 装饰线条 */
+        .header::after {
+            content: ''; position: absolute; bottom: -2px; left: 0; width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, #22d3ee, transparent);
         }
 
-        /* 通用盒子 */
-        .box {
-            background: rgba(30, 41, 59, 0.6);
-            border: 1px solid var(--primary-blue);
-            border-radius: var(--border-radius);
-            padding: 15px;
-            text-align: center;
-            box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
+        .header-title {
+            font-size: 3.2vh; /* 响应式字体 */
+            font-weight: bold;
+            letter-spacing: 4px;
+            background: linear-gradient(to bottom, #fff, #22d3ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(34, 211, 238, 0.5);
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .upload-area { z-index: 10; display: flex; align-items: center; }
+        .upload-btn {
+            background: rgba(34, 211, 238, 0.1);
+            border: 1px solid #22d3ee;
+            color: #22d3ee;
+            padding: 0.8vh 2vh;
+            font-size: 1.8vh;
             cursor: pointer;
-            transition: all 0.3s;
-            position: relative;
-            z-index: 2;
-        }
-        .box:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 0 20px var(--glow-color);
-            background: rgba(59, 130, 246, 0.3);
-        }
-
-        /* 左侧 */
-        .left-column {
-            display: flex;
-            flex-direction: column;
-            gap: 60px;
-            justify-content: center;
-        }
-        .layer-box {
-            background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
-            color: white;
-            padding: 20px 10px;
-        }
-        /* 左侧箭头：指令层指向右侧 */
-        .layer-box:first-child::after {
-            content: '→';
-            position: absolute;
-            right: -25px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 24px;
-            color: var(--glow-color);
-            animation: flow-right 1s infinite linear;
-        }
-
-        /* 中间部分 */
-        .center-column {
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-
-        /* 顶部系统 */
-        .top-systems {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            margin-bottom: 10px;
-        }
-        .system-box {
-            border: 1px dashed var(--glow-color);
-            color: var(--glow-color);
+            transition: 0.3s;
+            border-radius: 4px;
             font-weight: bold;
-            padding: 20px;
         }
+        .upload-btn:hover { background: #22d3ee; color: #000; box-shadow: 0 0 15px #22d3ee; }
 
-        /* 数据流向交互区 */
-        .data-flow-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            height: 120px;
-            margin: 10px 0;
-            position: relative;
-        }
-
-        .flow-group {
+        /* 2. KPI 区域 (高度占比 12%) */
+        .kpi-container {
+            flex: 0 0 14vh;
             display: flex;
-            justify-content: space-around;
-            align-items: center;
-            position: relative;
+            justify-content: space-between;
+            padding: 1.5vh 1.5vw;
+            gap: 1.5vw;
         }
-
-        .arrow-line {
-            width: 40px;
-            height: 100%;
+        .kpi-card {
+            flex: 1;
+            background: rgba(16, 28, 48, 0.4);
+            border: 1px solid rgba(64, 169, 255, 0.2);
+            position: relative;
             display: flex;
             flex-direction: column;
-            align-items: center;
             justify-content: center;
-            position: relative;
+            align-items: center;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
         }
+        /* 四角高亮装饰 */
+        .card-corner { position: absolute; width: 8px; height: 8px; border: 2px solid #22d3ee; transition: 0.3s; opacity: 0.7; }
+        .c-tl { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+        .c-tr { top: -1px; right: -1px; border-left: 0; border-bottom: 0; }
+        .c-bl { bottom: -1px; left: -1px; border-right: 0; border-top: 0; }
+        .c-br { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
 
-        /* 箭头图形绘制 */
-        .arrow-graphic {
-            width: 2px;
-            height: 60px;
-            background: rgba(56, 189, 248, 0.3);
-            position: relative;
-        }
-        
-        /* 动态水流 */
-        .arrow-graphic::after {
-            content: '';
-            position: absolute;
-            top: 0; left: -1px;
-            width: 4px; height: 100%;
-            background: linear-gradient(to bottom, transparent, var(--glow-color), transparent);
-            background-size: 100% 30px;
-            background-repeat: repeat-y;
-        }
-
-        .dir-down .arrow-graphic::after { animation: flow-down 1.5s linear infinite; }
-        .dir-up .arrow-graphic::after { animation: flow-up 1.5s linear infinite; }
-
-        .arrow-head {
-            font-size: 20px;
-            color: var(--glow-color);
+        .kpi-val { 
+            font-size: 5.5vh; /* 字体加大 */
+            font-weight: 900; color: #fff; 
+            text-shadow: 0 0 15px rgba(255,255,255,0.4); 
+            font-family: 'Impact', sans-serif; 
             line-height: 1;
-            margin: 5px 0;
+        }
+        .kpi-label { 
+            color: #94a3b8; 
+            font-size: 2vh; /* 字体加大 */
+            margin-top: 0.5vh; 
+            letter-spacing: 1px; 
         }
 
-        .flow-text {
-            font-size: 11px;
-            color: #94a3b8;
-            width: 100px;
-            text-align: center;
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: var(--dark-blue);
-            z-index: 1;
-            padding: 2px;
+        /* 3. 主图表区域 (自适应剩余高度) */
+        .main-grid {
+            flex: 1; /* 占满剩余空间 */
+            display: grid;
+            grid-template-columns: 28% 44% 28%; /* 左右比例 */
+            gap: 1.5vw;
+            padding: 0 1.5vw 2vh 1.5vw;
+            min-height: 0; /* 防止内容溢出 */
         }
         
-        .left-text { left: -110px; text-align: right; }
-        .right-text { right: -110px; text-align: left; }
-        .center-text-l { right: 8px; text-align: right; font-size: 10px;}
-        .center-text-r { left: 8px; text-align: left; font-size: 10px;}
-
-
-        /* 核心模块 */
-        .core-module {
-            background: linear-gradient(90deg, #1e40af 0%, #3b82f6 50%, #1e40af 100%);
-            color: white;
-            font-size: 22px;
-            font-weight: bold;
-            padding: 30px;
-            border-radius: 60px;
-            border: 2px solid var(--glow-color);
-            box-shadow: 0 0 25px rgba(59, 130, 246, 0.6);
-            z-index: 10;
-        }
-
-        /* 底部场景区 */
-        .scenarios-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-top: 40px;
-            padding: 20px 20px 40px 20px; /* 底部增加内边距给箭头留空间 */
-            border: 1px dashed #334155;
-            border-radius: 12px;
+        .col { display: flex; flex-direction: column; gap: 1.5vh; height: 100%; min-height: 0; }
+        
+        /* 图表卡片 */
+        .chart-panel {
+            flex: 1;
+            background: rgba(13, 22, 39, 0.5);
+            border: 1px solid rgba(30, 58, 138, 0.3);
             position: relative;
-        }
-
-        .scenario-items {
-            display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .s-item {
-            font-size: 12px;
-            padding: 8px 15px;
-            background: #1e293b;
-            color: #e2e8f0;
-            border: 1px solid #475569;
-            border-radius: 20px;
-            position: relative;
-        }
-
-        /* 场景内部箭头 */
-        .s-item::before {
-            position: absolute;
-            top: -25px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 18px;
-            color: var(--glow-color);
-            opacity: 0.8;
-        }
-        .s-item.arrow-up::before { content: '↑'; top: -22px; animation: flow-up 1.5s infinite; }
-        .s-item.arrow-down::before { content: '↓'; top: -22px; animation: flow-down 1.5s infinite; }
-
-        /* --- 新增：场景小模块指向属地企业的箭头 --- */
-        .s-item::after {
-            content: '';
-            position: absolute;
-            top: 100%; /* 从模块底部开始 */
-            left: 50%;
-            transform: translateX(-50%);
-            width: 2px;
-            height: 30px; /* 箭头长度，连接到下方企业模块 */
-            background: linear-gradient(to bottom, var(--glow-color), transparent);
-            background-size: 100% 20px;
-            animation: flow-vertical-line 1s linear infinite;
-            opacity: 0.6;
-        }
-
-        /* 底部企业 */
-        .bottom-enterprise {
-            margin-top: 5px; /* 调整与场景容器的间距 */
-            border: 2px solid var(--glow-color);
-            color: var(--glow-color);
-            border-radius: 30px;
-            z-index: 5; /* 确保在箭头之上 */
-        }
-
-        /* 右侧机制 - 改进版 */
-        .right-column {
+            padding: 1vh;
             display: flex;
             flex-direction: column;
-            justify-content: center; /* 垂直居中 */
-            height: 100%; /* 占满父容器高度以便居中 */
-        }
-
-        .right-column .box {
-            /* height: 100%;  移除固定高度 */
-            align-items: stretch; /* 子元素占满宽度 */
-            text-align: left;
-            background: rgba(30, 41, 59, 0.4);
-            padding: 30px 20px; /* 增加内部内边距，减少尾部留白感 */
+            min-height: 0; /* 关键：允许子元素缩小 */
         }
         
-        .right-title {
-            font-weight:bold; font-size:18px; margin-bottom:25px; color:white; text-align: center;
+        .panel-title {
+            font-size: 2.2vh; /* 字体加大 */
+            color: #e2e8f0;
+            padding-left: 10px;
+            border-left: 4px solid #22d3ee;
+            margin-bottom: 0.5vh;
+            background: linear-gradient(90deg, rgba(34, 211, 238, 0.1), transparent);
+            padding: 0.5vh 1vh;
+            flex-shrink: 0;
         }
 
-        .mech-item {
-            margin-top: 15px;
-            padding: 12px;
-            background: rgba(59, 130, 246, 0.2);
-            border-left: 4px solid var(--glow-color);
-            color: var(--text-color);
-            font-weight: 500;
+        .chart-div { 
+            flex: 1; 
+            width: 100%; 
+            min-height: 0; /* 必须设置，否则 ECharts 不会随 Flex 缩小 */
         }
 
-        /* 弹窗 */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 100; justify-content: center; align-items: center; }
-        .modal-content { background: #1e293b; padding: 30px; border-radius: 10px; max-width: 500px; border: 1px solid var(--glow-color); color: white; }
+        /* 颜色辅助 */
+        .text-cyan { color: #22d3ee; text-shadow: 0 0 10px #22d3ee; }
+        .text-red { color: #f43f5e; text-shadow: 0 0 10px #f43f5e; }
+        #status-msg { margin-right: 15px; color: #4ade80; font-size: 1.6vh; text-shadow: 0 0 5px #4ade80; }
+
     </style>
 </head>
 <body>
 
-    <header>
-        <h2>企业认证科</h2>
-        <h1>AEO数智1+3+X架构图</h1>
-    </header>
+<!-- 1. 头部 -->
+<div class="header">
+    <div style="width: 200px;"></div> <!-- 占位 -->
+    <div class="header-title">企业认证科数智视界 V10.0</div>
+    <div class="upload-area">
+        <span id="status-msg"></span>
+        <button class="upload-btn" onclick="document.getElementById('fileInput').click()">📂 上传 Excel</button>
+        <input type="file" id="fileInput" accept=".xlsx, .xls" style="display:none" onchange="handleFile(this)">
+    </div>
+</div>
 
-    <div class="container">
-        <div class="left-column">
-            <div class="box layer-box" onclick="alertDetail('指令层')">
-                指令层<br><span style="font-size:12px; opacity:0.8">总署、总关</span>
-            </div>
-            <div class="box layer-box" onclick="alertDetail('操作层')">
-                操作层<br><span style="font-size:12px; opacity:0.8">隶属关、科室</span>
-            </div>
-            <div class="box layer-box" onclick="alertDetail('交互层')">
-                交互层<br><span style="font-size:12px; opacity:0.8">属地企业</span>
-            </div>
+<!-- 2. KPI -->
+<div class="kpi-container">
+    <div class="kpi-card">
+        <span class="card-corner c-tl"></span><span class="card-corner c-tr"></span><span class="card-corner c-bl"></span><span class="card-corner c-br"></span>
+        <div class="kpi-val text-cyan" id="v_total">-</div>
+        <div class="kpi-label">总作业量 (Total)</div>
+    </div>
+    <div class="kpi-card">
+        <span class="card-corner c-tl"></span><span class="card-corner c-tr"></span><span class="card-corner c-bl"></span><span class="card-corner c-br"></span>
+        <div class="kpi-val" id="v_days">-</div>
+        <div class="kpi-label">平均耗时 (Days)</div>
+    </div>
+    <div class="kpi-card">
+        <span class="card-corner c-tl"></span><span class="card-corner c-tr"></span><span class="card-corner c-bl"></span><span class="card-corner c-br"></span>
+        <div class="kpi-val" id="v_rate">-</div>
+        <div class="kpi-label">办结率 (Rate %)</div>
+    </div>
+    <div class="kpi-card" style="border-color: rgba(244, 63, 94, 0.3);">
+        <span class="card-corner c-tl" style="border-color:#f43f5e"></span><span class="card-corner c-tr" style="border-color:#f43f5e"></span>
+        <span class="card-corner c-bl" style="border-color:#f43f5e"></span><span class="card-corner c-br" style="border-color:#f43f5e"></span>
+        <div class="kpi-val text-red" id="v_err">-</div>
+        <div class="kpi-label">异常退回 (Errors)</div>
+    </div>
+</div>
+
+<!-- 3. 内容网格 -->
+<div class="main-grid">
+    <!-- 左侧 -->
+    <div class="col">
+        <div class="chart-panel" style="flex: 4;">
+            <div class="panel-title">业务类型分布</div>
+            <div id="c1" class="chart-div"></div>
+            <span class="card-corner c-bl"></span>
         </div>
-
-        <div class="center-column">
-            <div class="top-systems">
-                <div class="box system-box" onclick="alertDetail('行政相对人系统')">
-                    🌐 行政相对人统一管理3.0系统
-                </div>
-                <div class="box system-box" onclick="alertDetail('HZ综合业务系统')">
-                    💻 HZ综合业务管理系统
-                </div>
-            </div>
-
-            <div class="data-flow-container">
-                <div class="flow-group">
-                    <div class="arrow-line dir-down">
-                        <div class="arrow-graphic"></div>
-                        <div class="arrow-head">↓</div>
-                        <div class="flow-text left-text">作业指令编号<br>组长姓名<br>开始时间</div>
-                    </div>
-                    <div class="arrow-line dir-up">
-                        <div class="arrow-head">↑</div>
-                        <div class="arrow-graphic"></div>
-                        <div class="flow-text center-text-l">实地认证结果</div>
-                    </div>
-                </div>
-
-                <div class="flow-group">
-                    <div class="arrow-line dir-up">
-                        <div class="arrow-head">↑</div>
-                        <div class="arrow-graphic"></div>
-                        <div class="flow-text center-text-r">上报认证结果</div>
-                    </div>
-                    <div class="arrow-line dir-down">
-                        <div class="arrow-graphic"></div>
-                        <div class="arrow-head">↓</div>
-                        <div class="flow-text right-text">反馈后续工作</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="box core-module" onclick="alertDetail('AEO数智管理模块')">
-                AEO数智管理模块
-            </div>
-
-            <div class="scenarios-container">
-                <div style="text-align: center;">
-                    <h3 style="color:var(--glow-color); margin-bottom: 25px;">培育场景</h3>
-                    <div class="scenario-items">
-                        <div class="box s-item arrow-up" onclick="alertDetail('信用培育申请')">信用培育申请</div>
-                        <div class="box s-item arrow-down" onclick="alertDetail('湖海沙龙')">湖海沙龙</div>
-                        <div class="box s-item arrow-down" onclick="alertDetail('数据分析')">数据分析</div>
-                        <div class="box s-item arrow-down" onclick="alertDetail('AEO标准目录')">AEO标准目录清单</div>
-                        <div class="box s-item arrow-down" onclick="alertDetail('企业内审模板')">企业内审模板</div>
-                    </div>
-                </div>
-                <div style="text-align: center;">
-                    <h3 style="color:var(--glow-color); margin-bottom: 25px;">认证场景</h3>
-                    <div class="scenario-items">
-                        <div class="box s-item arrow-down" onclick="alertDetail('廉政反馈清单')">廉政反馈清单</div>
-                        <div class="box s-item arrow-up" onclick="alertDetail('企业电子问卷')">企业电子问卷<br>(非涉密)</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="box bottom-enterprise" onclick="alertDetail('属地企业')">
-                🏢 属地企业
-            </div>
-        </div>
-
-        <div class="right-column">
-            <div class="box" onclick="alertDetail('三融合机制')">
-                <div class="right-title">三融合机制</div>
-                <div class="mech-item">党建 + 业务</div>
-                <div class="mech-item">队伍协同</div>
-                <div class="mech-item">科室文化共建</div>
-            </div>
+        <div class="chart-panel" style="flex: 6;">
+            <div class="panel-title">状态转化漏斗</div>
+            <div id="c5" class="chart-div"></div>
+            <span class="card-corner c-bl"></span>
         </div>
     </div>
 
-    <div class="modal-overlay" id="modal" onclick="this.style.display='none'">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <h2 id="m-title">标题</h2>
-            <p id="m-content">内容详情...</p>
-            <div style="margin-top:15px; padding:10px; border:1px dashed #666; color:#888; text-align:center;">
-                [ 此处展示海关工作人员工作照 ]
-            </div>
+    <!-- 中间 -->
+    <div class="col">
+        <div class="chart-panel" style="flex: 6;">
+            <div class="panel-title">月度接收热力监控</div>
+            <div id="c3" class="chart-div"></div>
+            <span class="card-corner c-tr"></span><span class="card-corner c-tl"></span>
+        </div>
+        <div class="chart-panel" style="flex: 4;">
+            <div class="panel-title">耗时区间分布</div>
+            <div id="c2" class="chart-div"></div>
+            <span class="card-corner c-br"></span><span class="card-corner c-bl"></span>
         </div>
     </div>
 
-    <script>
-        function alertDetail(title) {
-            document.getElementById('modal').style.display = 'flex';
-            document.getElementById('m-title').innerText = title;
-            document.getElementById('m-content').innerText = title + " 的详细功能描述与业务流程展示...";
+    <!-- 右侧 -->
+    <div class="col">
+        <div class="chart-panel" style="height: 100%;">
+            <div class="panel-title">各组效能排行榜</div>
+            <div id="c4" class="chart-div"></div>
+            <span class="card-corner c-br"></span><span class="card-corner c-tr"></span>
+        </div>
+    </div>
+</div>
+
+<script>
+// === 1. 初始化与自适应 ===
+let charts = {};
+// 科技风配色
+const techColors = ['#22d3ee', '#3b82f6', '#f43f5e', '#fbbf24', '#a855f7', '#10b981'];
+// 字体基准大小 (用于图表)
+const FS_L = 16; // 大号标签
+const FS_N = 14; // 普通标签
+const FS_T = 16; // 坐标轴
+
+window.addEventListener('load', () => {
+    charts.c1 = echarts.init(document.getElementById('c1'));
+    charts.c2 = echarts.init(document.getElementById('c2'));
+    charts.c3 = echarts.init(document.getElementById('c3'));
+    charts.c4 = echarts.init(document.getElementById('c4'));
+    charts.c5 = echarts.init(document.getElementById('c5'));
+    
+    showMsg('等待上传数据...');
+    
+    // 窗口变化时自动重绘，填满屏幕
+    window.addEventListener('resize', () => {
+        Object.values(charts).forEach(c => c.resize());
+    });
+});
+
+// === 2. 文件处理逻辑 (保持) ===
+function handleFile(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, {type: 'array'});
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const json = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+            if (json.length === 0) throw new Error("表格为空");
+            showMsg(`✅ 已加载 ${json.length} 条数据`);
+            processData(json);
+        } catch (err) {
+            alert("❌ 读取失败：" + err.message);
         }
-    </script>
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+function showMsg(txt) {
+    document.getElementById('status-msg').innerText = txt;
+}
+
+// === 3. 数据处理 ===
+function processData(data) {
+    const keys = Object.keys(data[0]);
+    const getCol = (names) => keys.find(k => names.some(n => k.trim() === n || k.trim().includes(n)));
+    
+    const F_START = getCol(['作业接收时间', '接收时间']);
+    const F_END = getCol(['认证完成时间', '完成时间']);
+    const F_TEAM = getCol(['认证组长', '组长']);
+    const F_TYPE = getCol(['作业类型']);
+    const F_STATUS = getCol(['作业进度', '进度']);
+    const F_RESULT = getCol(['认证结果']);
+
+    if (!F_START) { alert("⚠️ 错误：未找到【作业接收时间】列"); return; }
+
+    let s = { total: data.length, finished: 0, error: 0, durationSum: 0, durationCount: 0, types: {}, teams: {}, status: {}, heatmap: {}, dist: {'30天内':0, '45天内':0, '60天内':0, '75天内':0, '90天内':0, '90天以上':0} };
+
+    data.forEach(row => {
+        let type = row[F_TYPE] || "其他";
+        s.types[type] = (s.types[type] || 0) + 1;
+
+        let progress = row[F_STATUS] ? String(row[F_STATUS]) : "未知";
+        s.status[progress] = (s.status[progress] || 0) + 1;
+        if(progress.match(/完成|通过|已/)) s.finished++;
+
+        let resultVal = row[F_RESULT] ? String(row[F_RESULT]) : "";
+        if (resultVal.match(/退|不通过|撤|异常|不予/)) s.error++;
+
+        let team = row[F_TEAM];
+        if(team) { if(!s.teams[team]) s.teams[team] = {sum:0, count:0}; }
+
+        let dStart = parseExcelDate(row[F_START]);
+        let dEnd = parseExcelDate(row[F_END]);
+
+        if (dStart) {
+            let key = dStart.getFullYear() + '-' + (dStart.getMonth()+1);
+            s.heatmap[key] = (s.heatmap[key] || 0) + 1;
+        }
+
+        if (dStart && dEnd && team) {
+            let diff = (dEnd - dStart) / (86400000);
+            if (diff >= 0 && diff < 3650) {
+                s.durationSum += diff;
+                s.durationCount++;
+                s.teams[team].sum += diff;
+                s.teams[team].count++;
+                if(diff<=30) s.dist['30天内']++;
+                else if(diff<=45) s.dist['45天内']++;
+                else if(diff<=60) s.dist['60天内']++;
+                else if(diff<=75) s.dist['75天内']++;
+                else if(diff<=90) s.dist['90天内']++;
+                else s.dist['90天以上']++;
+            }
+        }
+    });
+
+    document.getElementById('v_total').innerText = s.total;
+    document.getElementById('v_rate').innerText = ((s.finished/s.total)*100).toFixed(1);
+    document.getElementById('v_err').innerText = s.error;
+    document.getElementById('v_days').innerText = s.durationCount ? (s.durationSum/s.durationCount).toFixed(1) : "-";
+
+    renderCharts(s);
+}
+
+// === 4. 图表渲染 (字体调大) ===
+function renderCharts(s) {
+    const labelColor = '#cbd5e1';
+    const axisConf = { 
+        axisLabel: { color: labelColor, fontSize: FS_T }, 
+        axisLine: { lineStyle: { color: 'rgba(255,255,255,0.2)' } },
+        splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)' } }
+    };
+
+    // C1: 饼图
+    charts.c1.setOption({
+        color: techColors,
+        tooltip: { trigger: 'item', textStyle:{fontSize:FS_N} },
+        legend: { bottom: '0%', textStyle: { color: '#fff', fontSize: FS_N }, itemWidth: 14, itemHeight: 14 },
+        series: [{
+            type: 'pie',
+            radius: ['45%', '70%'],
+            center: ['50%', '45%'],
+            itemStyle: { borderRadius: 5, borderColor: '#0f172a', borderWidth: 2 },
+            label: { show: true, color: '#fff', fontSize: FS_L, formatter: '{b}\n{d}%' },
+            data: Object.keys(s.types).map(k=>({name:k, value:s.types[k]}))
+        }]
+    });
+
+    // C2: 柱状图
+    let distKeys = ['30天内','45天内','60天内','75天内','90天内','90天以上'];
+    charts.c2.setOption({
+        tooltip: { trigger: 'axis', textStyle:{fontSize:FS_N} },
+        grid: { top: 30, bottom: 10, left: 10, right: 10, containLabel: true },
+        xAxis: { type: 'category', data: distKeys, ...axisConf },
+        yAxis: { type: 'value', ...axisConf },
+        series: [{
+            type: 'bar',
+            data: distKeys.map(k=>s.dist[k]),
+            barWidth: '40%',
+            label: { show: true, position: 'top', color: '#fff', fontSize: FS_N },
+            itemStyle: {
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                    { offset: 0, color: '#22d3ee' },
+                    { offset: 1, color: 'rgba(34, 211, 238, 0.1)' }
+                ]),
+                borderRadius: [4, 4, 0, 0]
+            }
+        }]
+    });
+
+    // C3: 热力图
+    let heatX = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+    let heatY = ['2024','2025'];
+    let hData = [];
+    Object.keys(s.heatmap).forEach(k => {
+        let [y, m] = k.split('-');
+        if(y === '2024' || y === '2025') {
+            hData.push([parseInt(m)-1, y==='2024'?0:1, s.heatmap[k]]);
+        }
+    });
+    
+    let maxVal = hData.reduce((m, p) => Math.max(m, p[2]), 1);
+
+    charts.c3.setOption({
+        tooltip: { position: 'top', textStyle:{fontSize:FS_N} },
+        grid: { bottom: 30, top: 10, left: 60, right: 30 },
+        visualMap: {
+            min: 0, max: maxVal,
+            calculable: true,
+            orient: 'horizontal',
+            left: 'center', bottom: 0,
+            inRange: { color: ['rgba(34, 211, 238, 0.1)', '#22d3ee', '#f43f5e'] },
+            textStyle: { color: '#fff', fontSize: FS_N }
+        },
+        xAxis: { type: 'category', data: heatX, ...axisConf, splitArea: { show: true, areaStyle: { color: ['rgba(255,255,255,0.02)', 'rgba(255,255,255,0.05)'] } } },
+        yAxis: { type: 'category', data: heatY, axisLabel: { color: '#fff', fontSize: 18, fontWeight: 'bold' }, splitArea: { show: false }, axisLine:{show:false}, axisTick:{show:false} },
+        series: [{
+            type: 'heatmap',
+            data: hData,
+            label: { show: true, color: '#fff', fontSize: 20 },
+            itemStyle: { borderColor: '#0f172a', borderWidth: 2 }
+        }]
+    });
+
+    // C4: 条形图
+    let teams = Object.keys(s.teams).map(k => ({
+        name: k,
+        val: s.teams[k].count ? (s.teams[k].sum/s.teams[k].count).toFixed(1) : 0
+    })).sort((a,b)=>a.val - b.val);
+    
+    charts.c4.setOption({
+        tooltip: { trigger: 'axis', textStyle:{fontSize:FS_N} },
+        grid: { left: 10, right: 60, top: 10, bottom: 0, containLabel: true },
+        xAxis: { type: 'value', ...axisConf },
+        yAxis: { type: 'category', data: teams.map(t=>t.name), axisLabel: { color: '#fff', fontSize: FS_T }, axisTick: {show:false}, axisLine: {show:false} },
+        series: [{
+            type: 'bar',
+            data: teams.map(t=>t.val),
+            barWidth: 20,
+            label: { show: true, position: 'right', color: '#fff', fontSize: FS_L, formatter: '{c}天' },
+            itemStyle: {
+                color: new echarts.graphic.LinearGradient(1, 0, 0, 0, [
+                    { offset: 0, color: '#a855f7' },
+                    { offset: 1, color: 'rgba(168, 85, 247, 0.1)' }
+                ]),
+                borderRadius: [0, 4, 4, 0]
+            }
+        }]
+    });
+
+    // C5: 漏斗
+    let fData = Object.keys(s.status).map(k=>({name:k, value:s.status[k]})).sort((a,b)=>b.value-a.value);
+    charts.c5.setOption({
+        color: ['#3b82f6', '#22d3ee', '#10b981', '#fbbf24', '#f43f5e'],
+        tooltip: { trigger: 'item', textStyle:{fontSize:FS_N} },
+        series: [{
+            type: 'funnel',
+            left: '5%', right: '5%', top: '5%', bottom: '5%',
+            width: '90%',
+            sort: 'descending',
+            label: { show: true, position: 'inside', color: '#fff', fontSize: FS_L, formatter: '{b}\n{c}' },
+            itemStyle: { borderColor: '#fff', borderWidth: 0 },
+            data: fData
+        }]
+    });
+}
+
+function parseExcelDate(v) {
+    if(!v) return null;
+    if(v instanceof Date) return v;
+    if(typeof v === 'number') return new Date((v - 25569)*86400000);
+    if(typeof v === 'string') {
+        let clean = v.replace(/\./g, '/').replace(/-/g, '/');
+        let d = new Date(clean);
+        return isNaN(d) ? null : d;
+    }
+    return null;
+}
+</script>
 </body>
 </html>
