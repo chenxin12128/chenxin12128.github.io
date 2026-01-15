@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>企业认证科数智视界 V14.0 - 视觉完美版</title>
+    <!-- 引入资源 -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    
+    <style>
+        /* === 全局重置 === */
+        :root {
+            --bg0: #02050b;
+            --bg1: #050b16;
+            --panel: rgba(15, 23, 42, 0.66);
+            --panel-2: rgba(2, 6, 23, 0.55);
+            --border: rgba(148, 163, 184, 0.14);
+            --border-strong: rgba(34, 211, 238, 0.35);
+            --text: #e2e8f0;
+            --muted: rgba(226, 232, 240, 0.72);
+            --accent: #22d3ee;
+            --green: #4ade80;
+            --red: #fb7185;
+            --amber: #fbbf24;
+            --purple: #a855f7;
+        }
+        * { box-sizing: border-box; outline: none; }
+        body {
+            margin: 0; padding: 0;
+            background-color: var(--bg0);
+            overflow: hidden; /* 禁止滚动 */
+            font-family: "Microsoft YaHei", "Helvetica Neue", sans-serif;
+            height: 100vh;
+            width: 100vw;
+            background-image:
+                radial-gradient(900px circle at 18% 15%, rgba(34, 211, 238, 0.22) 0%, transparent 45%),
+                radial-gradient(900px circle at 82% 45%, rgba(168, 85, 247, 0.22) 0%, transparent 48%),
+                radial-gradient(700px circle at 55% 90%, rgba(16, 185, 129, 0.12) 0%, transparent 52%),
+                linear-gradient(180deg, var(--bg1) 0%, var(--bg0) 100%);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+        }
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px),
+                linear-gradient(0deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+            background-size: 90px 90px;
+            opacity: 0.12;
+            mix-blend-mode: overlay;
+            z-index: 0;
+        }
+        body > * { position: relative; z-index: 1; }
+
+        /* === 1. 顶部 Header === */
+        .header {
+            flex: 0 0 8vh;
+            width: 100%;
+            background: linear-gradient(to bottom, rgba(15, 23, 42, 0.92), rgba(15, 23, 42, 0.25));
+            border-bottom: 1px solid rgba(34, 211, 238, 0.25);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            position: relative;
+            box-shadow: 0 18px 40px rgba(0,0,0,0.25);
+            backdrop-filter: blur(10px);
+        }
+        .header::after {
+            content: ''; position: absolute; bottom: -2px; left: 0; width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, #22d3ee, transparent);
+        }
+        .header-title {
+            font-size: 3.2vh; font-weight: bold; letter-spacing: 4px;
+            background: linear-gradient(to bottom, #fff, #22d3ee);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(34, 211, 238, 0.5);
+            position: absolute; left: 50%; transform: translateX(-50%);
+        }
+        .header-subtitle {
+            position: absolute;
+            left: 50%;
+            top: 64%;
+            transform: translateX(-50%);
+            font-size: 1.45vh;
+            color: var(--muted);
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+        /* 默认隐藏“年份提示条”（如需调试可改为 display:block） */
+        #yearBadge { display: none; }
+        .fs-btn {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 30px;
+            padding: 0 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.04);
+            color: rgba(255,255,255,0.72);
+            font-size: 12px;
+            cursor: pointer;
+            opacity: 0.32;
+            transition: 0.25s ease;
+            backdrop-filter: blur(8px);
+        }
+        .fs-btn:hover { opacity: 0.9; border-color: rgba(34, 211, 238, 0.45); color: #fff; }
+        .upload-area { z-index: 10; display: flex; align-items: center; }
+        .upload-btn {
+            background: rgba(34, 211, 238, 0.1); border: 1px solid rgba(34, 211, 238, 0.65); color: #bff4ff;
+            padding: 0.8vh 2vh; font-size: 1.8vh; cursor: pointer; transition: 0.3s;
+            border-radius: 10px; font-weight: 700;
+            backdrop-filter: blur(8px);
+        }
+        .upload-btn:hover { background: #22d3ee; color: #000; box-shadow: 0 0 18px rgba(34,211,238,0.75); }
+        .upload-btn.is-dim {
+            opacity: 0.32;
+            border-color: rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.04);
+            color: rgba(255,255,255,0.72);
+            box-shadow: none;
+            filter: saturate(0.75);
+        }
+        .upload-btn.is-dim:hover {
+            background: rgba(255,255,255,0.06);
+            color: rgba(255,255,255,0.88);
+            box-shadow: none;
+        }
+
+        /* === 2. KPI 区域 === */
+        .kpi-container {
+            flex: 0 0 14vh;
+            display: flex; justify-content: space-around; align-items: center;
+            padding: 1.5vh 1.5vw; gap: 1.5vw;
+        }
+        .kpi-card {
+            flex: 1; height: 100%;
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.62), rgba(2, 6, 23, 0.45));
+            border: 1px solid rgba(148, 163, 184, 0.14);
+            border-radius: 14px;
+            position: relative; display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            box-shadow: 0 14px 34px rgba(0,0,0,0.26), inset 0 0 0 1px rgba(34, 211, 238, 0.06);
+            transition: transform 0.3s ease, box-shadow 0.3s;
+            cursor: pointer; /* 提示可点击 */
+        }
+        .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 18px 45px rgba(34, 211, 238, 0.10); }
+        .card-corner { position: absolute; width: 8px; height: 8px; border: 2px solid #22d3ee; opacity: 0.7; }
+        .c-tl { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+        .c-tr { top: -1px; right: -1px; border-left: 0; border-bottom: 0; }
+        .c-bl { bottom: -1px; left: -1px; border-right: 0; border-top: 0; }
+        .c-br { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
+        .kpi-val { font-size: 5.5vh; font-weight: 900; color: #fff; text-shadow: 0 0 15px rgba(255,255,255,0.4); font-family: 'Impact', sans-serif; line-height: 1; }
+        .kpi-label { color: #94a3b8; font-size: 2vh; margin-top: 0.5vh; letter-spacing: 1px; }
+
+        /* 金色KPI卡片 */
+        .kpi-card-gold {
+            border-color: rgba(255, 215, 0, 0.5); background: rgba(40, 33, 14, 0.6);
+            transform: scale(1.08); z-index: 10;
+        }
+        .kpi-card-gold:hover { transform: scale(1.1); box-shadow: 0 0 20px rgba(255, 215, 0, 0.4); }
+        .kpi-card-gold .card-corner { border-color: #FFD700; }
+        .text-gold { color: #FFD700; text-shadow: 0 0 15px rgba(255, 215, 0, 0.7); }
+        .text-cyan { color: #22d3ee; text-shadow: 0 0 10px #22d3ee; }
+        .text-red { color: #f43f5e; text-shadow: 0 0 10px #f43f5e; }
+
+        /* === 3. 主图表区域 === */
+        .main-grid {
+            flex: 1; display: grid; grid-template-columns: 28% 44% 28%;
+            gap: 1.5vw; padding: 0 1.5vw 2vh 1.5vw; min-height: 0;
+        }
+        .col { display: flex; flex-direction: column; gap: 1.5vh; height: 100%; min-height: 0; }
+        .chart-panel {
+            flex: 1;
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.62), rgba(2, 6, 23, 0.48));
+            border: 1px solid rgba(148, 163, 184, 0.14);
+            border-radius: 16px;
+            box-shadow: 0 18px 50px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(34, 211, 238, 0.06);
+            backdrop-filter: blur(10px);
+            position: relative; padding: 1vh; display: flex; flex-direction: column; min-height: 0;
+        }
+        .chart-panel::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 16px;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(34,211,238,0.25), rgba(168,85,247,0.18), rgba(255,255,255,0.03));
+            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+            opacity: 0.55;
+        }
+        .panel-title {
+            font-size: 2.2vh; color: #e2e8f0; padding-left: 10px;
+            border-left: 4px solid #22d3ee; margin-bottom: 0.5vh;
+            background: linear-gradient(90deg, rgba(34, 211, 238, 0.1), transparent);
+            padding: 0.5vh 1vh; flex-shrink: 0;
+        }
+        .chart-div { flex: 1; width: 100%; min-height: 0; }
+        /* 默认隐藏右上角状态提示（如需调试可改为 display:inline-block） */
+        #status-msg { display: none; margin-right: 0; color: #4ade80; font-size: 1.6vh; text-shadow: 0 0 5px #4ade80; }
+
+        /* === 4. 模态框 (Modal) 样式 === */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85); z-index: 1000;
+            display: none; justify-content: center; align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: #0f172a; width: 90%; height: 90%;
+            border: 1px solid #3b82f6; border-radius: 8px;
+            box-shadow: 0 0 50px rgba(59, 130, 246, 0.3);
+            display: flex; flex-direction: column; padding: 20px;
+            position: relative;
+        }
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 10px; flex-shrink: 0;
+        }
+        .modal-title { font-size: 24px; color: #fff; font-weight: bold; }
+        .modal-close {
+            font-size: 28px; color: #94a3b8; cursor: pointer; transition: 0.3s;
+        }
+        .modal-close:hover { color: #f43f5e; }
+        .modal-body { flex: 1; overflow: auto; border: 1px solid rgba(255,255,255,0.1); }
+        
+        .data-table { width: 100%; border-collapse: collapse; color: #e2e8f0; font-size: 13px; table-layout: auto; }
+        .data-table th, .data-table td {
+            border: 1px solid rgba(255,255,255,0.1); padding: 8px; text-align: left;
+            white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis;
+        }
+        .data-table th { 
+            background-color: #1e293b; color: #22d3ee; position: sticky; top: 0; z-index: 10;
+            box-shadow: 0 2px 2px rgba(0,0,0,0.5);
+        }
+        .data-table tr:nth-child(even) { background: rgba(255,255,255,0.03); }
+        .data-table tr:hover { background: rgba(59, 130, 246, 0.2); }
+        
+        .export-btn {
+            background: #10b981; border: none; color: white; padding: 5px 15px;
+            border-radius: 4px; cursor: pointer; font-size: 14px; margin-left: 20px;
+        }
+        .export-btn:hover { background: #059669; }
+    </style>
+</head>
+<body>
+
+<!-- 模态框 -->
+<div id="dataModal" class="modal-overlay" onclick="closeModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <div style="display:flex; align-items:center;">
+                <span id="modalTitle" class="modal-title">数据明细</span>
+                <button class="export-btn" onclick="exportModalData()">📥 导出此明细</button>
+            </div>
+            <span class="modal-close" onclick="closeModalDirect()">×</span>
+        </div>
+        <div class="modal-body">
+            <table class="data-table" id="modalTable">
+                <thead></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 主界面 -->
+<div class="header">
+    <div style="width: 200px;"></div>
+    <div class="header-title">企业认证科数智视界 V14.0</div>
+    <div id="yearBadge" class="header-subtitle"></div>
+    <button id="fsBtn" class="fs-btn" onclick="toggleFullscreen()" title="全屏">全屏</button>
+    <div class="upload-area">
+        <span id="status-msg"></span>
+        <button id="uploadBtn" class="upload-btn" onclick="document.getElementById('fileInput').click()">📂 上传 Excel</button>
+        <input type="file" id="fileInput" accept=".xlsx, .xls" style="display:none" onchange="handleFile(this)">
+    </div>
+</div>
+
+<div class="kpi-container">
+    <div class="kpi-card" onclick="showDetail('Total')">
+        <span class="card-corner c-tl"></span><span class="card-corner c-tr"></span><span class="card-corner c-bl"></span><span class="card-corner c-br"></span>
+        <div class="kpi-val text-cyan" id="v_total">-</div>
+        <div class="kpi-label">总作业量 (Total)</div>
+    </div>
+    <div class="kpi-card" onclick="showDetail('AvgDays')">
+        <span class="card-corner c-tl"></span><span class="card-corner c-tr"></span><span class="card-corner c-bl"></span><span class="card-corner c-br"></span>
+        <div class="kpi-val" id="v_days">-</div>
+        <div class="kpi-label">平均耗时 (Days)</div>
+    </div>
+    <div class="kpi-card kpi-card-gold" onclick="showDetail('NetAEO')">
+        <span class="card-corner c-tl"></span><span class="card-corner c-tr"></span><span class="card-corner c-bl"></span><span class="card-corner c-br"></span>
+        <div class="kpi-val text-gold" id="v_net_aeo">-</div>
+        <div class="kpi-label">净增AEO企业</div>
+    </div>
+    <div class="kpi-card" onclick="showDetail('Rate')">
+        <span class="card-corner c-tl"></span><span class="card-corner c-tr"></span><span class="card-corner c-bl"></span><span class="card-corner c-br"></span>
+        <div class="kpi-val" id="v_rate">-</div>
+        <div class="kpi-label">办结率 (Rate %)</div>
+    </div>
+    <div class="kpi-card" style="border-color: rgba(244, 63, 94, 0.3);" onclick="showDetail('Errors')">
+        <span class="card-corner c-tl" style="border-color:#f43f5e"></span><span class="card-corner c-tr" style="border-color:#f43f5e"></span>
+        <span class="card-corner c-bl" style="border-color:#f43f5e"></span><span class="card-corner c-br" style="border-color:#f43f5e"></span>
+        <div class="kpi-val text-red" id="v_err">-</div>
+        <div class="kpi-label">异常退回 (Errors)</div>
+    </div>
+</div>
+
+<div class="main-grid">
+    <div class="col">
+        <!-- 堆叠柱状图 -->
+        <div class="chart-panel" style="flex: 4;">
+            <div class="panel-title" id="title-c1">业务构成与进度同比</div>
+            <div id="c1" class="chart-div"></div>
+            <span class="card-corner c-bl"></span>
+        </div>
+        <div class="chart-panel" style="flex: 6;">
+            <div class="panel-title" id="title-c5">作业状态</div>
+            <div id="c5" class="chart-div"></div>
+            <span class="card-corner c-bl"></span>
+        </div>
+    </div>
+    <div class="col">
+        <!-- 热力图 -->
+        <div class="chart-panel" style="flex: 6;">
+            <div class="panel-title" id="title-c3">月度接收热力监控</div>
+            <div id="c3" class="chart-div"></div>
+            <span class="card-corner c-tr"></span><span class="card-corner c-tl"></span>
+        </div>
+        <div class="chart-panel" style="flex: 4;">
+            <div class="panel-title" id="title-c2">耗时区间分布</div>
+            <div id="c2" class="chart-div"></div>
+            <span class="card-corner c-br"></span><span class="card-corner c-bl"></span>
+        </div>
+    </div>
+    <div class="col">
+        <div class="chart-panel" style="height: 100%;">
+            <div class="panel-title" id="title-c4">各组效能排行榜</div>
+            <div id="c4" class="chart-div"></div>
+            <span class="card-corner c-br"></span><span class="card-corner c-tr"></span>
+        </div>
+    </div>
+</div>
+
+<script>
+// === 全局变量 ===
+let charts = {};
+let globalData = []; 
+let detailMap = {};  
+let yoyDetailMap = {};
+let currentModalData = []; 
+let yearInfo = { latest: null, prev: null, yearCol: null };
+let c4Mode = 'team';
+let c4RotateTimer = null;
+const techColors = ['#22d3ee', '#3b82f6', '#f43f5e', '#fbbf24', '#a855f7', '#10b981'];
+let FS_N = 14, FS_T = 12, FS_L = 16, FS_S = 11;
+let rerenderTimer = null;
+
+function updateFontScale() {
+    const w = Math.max(320, window.innerWidth || 1920);
+    const h = Math.max(320, window.innerHeight || 1080);
+    const raw = Math.min(w / 1920, h / 1080);
+    const scale = Math.max(0.9, Math.min(1.6, raw));
+    FS_T = Math.round(12 * scale);
+    FS_N = Math.round(14 * scale);
+    FS_L = Math.round(16 * scale);
+    FS_S = Math.round(11 * scale);
+}
+
+window.addEventListener('load', () => {
+    updateFontScale();
+    charts.c1 = echarts.init(document.getElementById('c1'));
+    charts.c2 = echarts.init(document.getElementById('c2'));
+    charts.c3 = echarts.init(document.getElementById('c3'));
+    charts.c4 = echarts.init(document.getElementById('c4'));
+    charts.c5 = echarts.init(document.getElementById('c5'));
+    
+    setupChartEvents(); 
+    showMsg('等待上传数据...');
+    window.addEventListener('resize', () => {
+        Object.values(charts).forEach(c => c.resize());
+        if (!globalData || globalData.length === 0) return;
+        if (rerenderTimer) clearTimeout(rerenderTimer);
+        rerenderTimer = setTimeout(() => {
+            updateFontScale();
+            processData(globalData);
+        }, 180);
+    });
+    document.addEventListener('fullscreenchange', () => {
+        syncFullscreenBtn();
+        Object.values(charts).forEach(c => c.resize());
+        if (!globalData || globalData.length === 0) return;
+        updateFontScale();
+        processData(globalData);
+    });
+});
+
+function handleFile(input) {
+    const file = input.files[0];
+    if (!file) return;
+    showMsg('解析中...');
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, {type: 'array', cellDates: true});
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const json = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+            if (json.length === 0) throw new Error("表格为空");
+            showMsg(`已加载 ${json.length} 条数据`);
+            const ok = processData(json);
+            if (ok) setUploadButtonDim(true);
+        } catch (err) {
+            showMsg(`失败: ${err.message}`);
+            alert(err.message);
+        }
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+function toggleFullscreen() {
+    const root = document.documentElement;
+    if (!document.fullscreenElement) {
+        if (root.requestFullscreen) root.requestFullscreen();
+        return;
+    }
+    if (document.exitFullscreen) document.exitFullscreen();
+}
+
+function syncFullscreenBtn() {
+    const btn = document.getElementById('fsBtn');
+    if (!btn) return;
+    btn.textContent = document.fullscreenElement ? '退出' : '全屏';
+}
+
+function setUploadButtonDim(dim) {
+    const btn = document.getElementById('uploadBtn');
+    if (!btn) return;
+    btn.classList.toggle('is-dim', !!dim);
+}
+
+function parseYearValue(v) {
+    if (v === null || v === undefined) return null;
+    if (typeof v === 'number' && Number.isFinite(v)) {
+        const y = Math.trunc(v);
+        return y >= 2000 && y <= 2100 ? y : null;
+    }
+    const s = String(v).trim();
+    if (!s) return null;
+    const m = s.match(/(20\d{2})/);
+    if (m) return parseInt(m[1], 10);
+    const m2 = s.match(/^\d{2}$/);
+    if (m2) {
+        const yy = parseInt(s, 10);
+        return yy < 80 ? 2000 + yy : 1900 + yy;
+    }
+    return null;
+}
+
+function getRowYear(row, F) {
+    const yFromCol = F.YEAR ? parseYearValue(row[F.YEAR]) : null;
+    if (yFromCol) return yFromCol;
+    const d = getHeatmapDate(row, F) || parseDate(F.START ? row[F.START] : null) || parseDate(F.APPLY ? row[F.APPLY] : null) || parseDate(F.EXPIRE ? row[F.EXPIRE] : null);
+    return d ? d.getFullYear() : null;
+}
+
+function pickLatestYears(rows, F) {
+    const years = [];
+    rows.forEach(r => {
+        const y = getRowYear(r, F);
+        if (y) years.push(y);
+    });
+    const uniq = Array.from(new Set(years)).sort((a, b) => a - b);
+    const latest = uniq.length ? uniq[uniq.length - 1] : new Date().getFullYear();
+    let prev = latest - 1;
+    if (uniq.includes(latest - 1)) prev = latest - 1;
+    else if (uniq.length > 1) prev = uniq[uniq.length - 2];
+
+    return { latest, prev, yearCol: F.YEAR || null };
+}
+
+function normalizeType(v) {
+    const raw = (v === null || v === undefined) ? '' : String(v).trim();
+    if (!raw) return '其他';
+    if (/新/.test(raw)) return '新申请';
+    if (/复核|复认|复审/.test(raw)) return '复核';
+    return raw;
+}
+
+function shiftMonths(date, deltaMonths) {
+    const d = new Date(date.getTime());
+    d.setMonth(d.getMonth() + deltaMonths);
+    return d;
+}
+
+function getHeatmapDate(row, F) {
+    const type = normalizeType(F.TYPE ? row[F.TYPE] : null);
+    if (type === '复核') {
+        const expire = parseDate(F.EXPIRE ? row[F.EXPIRE] : null);
+        if (expire) return shiftMonths(expire, -3);
+    }
+
+    // 新申请：优先“作业开始时间（企业申请时间）”，否则“作业接收时间”
+    const apply = parseDate(F.APPLY ? row[F.APPLY] : null);
+    const recv = parseDate(F.START ? row[F.START] : null);
+    if (type === '新申请') return apply || recv;
+
+    // 其他：优先“作业接收时间”，否则“作业开始时间”
+    return recv || apply;
+}
+
+function normalizeStatus(v) {
+    const raw = (v === null || v === undefined) ? '' : String(v).trim();
+    return raw ? raw : '认证中';
+}
+
+function getMainStatus(status, result) {
+    const st = normalizeStatus(status);
+    const res = (result === null || result === undefined) ? '' : String(result).trim();
+    if (res.match(/退|不通过|撤|异常|不予/)) return '退回';
+    if (st.match(/完成|通过|已/) || res === '通过') return '已完成';
+    return '认证中';
+}
+
+function analyzeData(rows, F, targetYear) {
+    const map = {
+        Total: [], NetAEO: [], Errors: [], Finished: [],
+        dist: {}, heatmap: {}, teams: {}, funnel: {}, stackBar: {},
+        personType: {}
+    };
+
+    const stats = {
+        total: rows.length, finished: 0, error: 0,
+        durationSum: 0, durationCount: 0, netAEO: 0,
+        dist: { '30天内': 0, '45天内': 0, '60天内': 0, '75天内': 0, '90天内': 0, '90天以上': 0 }
+    };
+
+    rows.forEach(row => {
+        map.Total.push(row);
+
+        const status = normalizeStatus(row[F.STATUS]);
+        const type = normalizeType(row[F.TYPE]);
+        const result = row[F.RESULT];
+        const mainStatus = getMainStatus(status, result);
+
+        const stackKey = `${mainStatus}>${type}`;
+        if (!map.stackBar[stackKey]) map.stackBar[stackKey] = [];
+        map.stackBar[stackKey].push(row);
+
+        if (mainStatus === '已完成') { stats.finished++; map.Finished.push(row); }
+        if (mainStatus === '退回') { stats.error++; map.Errors.push(row); }
+        if (type === '新申请' && String(result || '').trim() === '通过') { stats.netAEO++; map.NetAEO.push(row); }
+
+        if (!map.funnel[status]) map.funnel[status] = [];
+        map.funnel[status].push(row);
+
+        const rowYear = getRowYear(row, F) || targetYear;
+        const dStart = parseDate(F.START ? row[F.START] : null) || parseDate(F.APPLY ? row[F.APPLY] : null);
+        const dEnd = parseDate(F.END ? row[F.END] : null);
+        const team = (row[F.TEAM] === null || row[F.TEAM] === undefined) ? '' : String(row[F.TEAM]).trim();
+
+        if (dStart) {
+            const hmKey = `${rowYear}-${dStart.getMonth() + 1}`;
+            if (!map.heatmap[hmKey]) map.heatmap[hmKey] = [];
+            map.heatmap[hmKey].push(row);
+        }
+
+        if (team && mainStatus === '已完成') {
+            const t = (type === '新申请' || type === '复核') ? type : '其他';
+            const ptKey = `${team}|${t}`;
+            if (!map.personType[ptKey]) map.personType[ptKey] = [];
+            map.personType[ptKey].push(row);
+        }
+
+        if (dStart && dEnd && team) {
+            const diff = (dEnd - dStart) / 86400000;
+            if (diff >= 0 && diff < 3650) {
+                stats.durationSum += diff;
+                stats.durationCount++;
+                if (!map.teams[team]) map.teams[team] = [];
+                map.teams[team].push(row);
+                const dKey = diff <= 30 ? '30天内' : diff <= 45 ? '45天内' : diff <= 60 ? '60天内' : diff <= 75 ? '75天内' : diff <= 90 ? '90天内' : '90天以上';
+                stats.dist[dKey]++;
+                if (!map.dist[dKey]) map.dist[dKey] = [];
+                map.dist[dKey].push(row);
+            }
+        }
+    });
+
+    return { stats, map };
+}
+
+function analyzeYoy(rows, F, latestYear, prevYear) {
+    const mainStatuses = ['已完成', '认证中', '退回'];
+    const years = [prevYear, latestYear];
+
+    const typesSet = new Set();
+    const counts = {};
+    years.forEach(y => {
+        counts[y] = {};
+        mainStatuses.forEach(st => (counts[y][st] = {}));
+    });
+
+    const map = { stackBar: {} };
+
+    rows.forEach(row => {
+        const y = getRowYear(row, F);
+        if (y !== latestYear && y !== prevYear) return;
+
+        const status = normalizeStatus(row[F.STATUS]);
+        const type = normalizeType(row[F.TYPE]);
+        const mainStatus = getMainStatus(status, row[F.RESULT]);
+
+        typesSet.add(type);
+        counts[y][mainStatus][type] = (counts[y][mainStatus][type] || 0) + 1;
+
+        const key = `${y}|${mainStatus}>${type}`;
+        if (!map.stackBar[key]) map.stackBar[key] = [];
+        map.stackBar[key].push(row);
+    });
+
+    const order = ['新申请', '复核', '其他'];
+    const types = Array.from(typesSet).sort((a, b) => {
+        const ia = order.indexOf(a);
+        const ib = order.indexOf(b);
+        if (ia !== -1 || ib !== -1) return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+        return String(a).localeCompare(String(b), 'zh');
+    });
+
+    return { types, counts, map };
+}
+
+function updateYearUI(latest, prev, yearCol, latestCount, totalCount) {
+    const badge = document.getElementById('yearBadge');
+    if (badge) {
+        const src = yearCol ? `依据：${yearCol}` : '未找到“作业年份”列，使用日期推断';
+        badge.textContent = `最新年份：${latest}  |  同比：${prev}→${latest}  |  本年：${latestCount}/${totalCount}  |  ${src}`;
+    }
+
+    const t1 = document.getElementById('title-c1');
+    if (t1) t1.textContent = `业务构成与进度同比（${prev} vs ${latest}）`;
+    const t2 = document.getElementById('title-c2');
+    if (t2) t2.textContent = `耗时区间分布（${latest}）`;
+    const t3 = document.getElementById('title-c3');
+    if (t3) t3.textContent = `月度接收热力监控（按口径日期年份）`;
+    const t5 = document.getElementById('title-c5');
+    if (t5) t5.textContent = `作业状态（${latest}）`;
+
+    showMsg(`显示 ${latest} 年数据（${latestCount} 条），同比 ${prev} vs ${latest}`);
+    syncFullscreenBtn();
+}
+
+function processData(data) {
+    globalData = data;
+
+    const keys = Object.keys(data[0] || {});
+    const getCol = (names) => keys.find(k => names.some(n => k.trim() === n || k.trim().includes(n)));
+    const F = {
+        YEAR: getCol(['作业年份']),
+        APPLY: getCol(['作业开始时间', '企业申请时间']),
+        START: getCol(['作业接收时间', '接收时间']),
+        EXPIRE: getCol(['复认五年到期时间', '五年到期时间', '到期时间']),
+        END: getCol(['认证完成时间', '完成时间']),
+        TEAM: getCol(['认证组长', '组长']),
+        TYPE: getCol(['作业类型']),
+        STATUS: getCol(['作业进度', '进度']),
+        RESULT: getCol(['认证结果'])
+    };
+    if (!F.TYPE || !F.STATUS || !F.RESULT) {
+        alert("缺少关键列：作业类型 / 作业进度 / 认证结果");
+        return false;
+    }
+
+    yearInfo = pickLatestYears(data, F);
+    const latest = new Date().getFullYear();
+    const prev = latest - 1;
+
+    const dataLatest = data.filter(r => getRowYear(r, F) === latest);
+    const main = analyzeData(dataLatest, F, latest);
+    detailMap = main.map;
+
+    const yoy = analyzeYoy(data, F, latest, prev);
+    yoyDetailMap = yoy.map;
+
+    // 热力图（框2）：取消“作业年份”判定；按口径日期（getHeatmapDate）的年+月聚合
+    const heatmapAll = {};
+    data.forEach(row => {
+        // 月份维度：按作业类型口径取日期，再取月份
+        const dHeat = getHeatmapDate(row, F);
+        if (!dHeat) return;
+        const y = dHeat.getFullYear();
+        const key = `${y}-${dHeat.getMonth() + 1}`;
+        if (!heatmapAll[key]) heatmapAll[key] = [];
+        heatmapAll[key].push(row);
+    });
+    main.map.heatmap = heatmapAll;
+
+    updateYearUI(latest, prev, yearInfo.yearCol, dataLatest.length, data.length);
+
+    document.getElementById('v_total').innerText = main.stats.total;
+    document.getElementById('v_days').innerText = main.stats.durationCount ? (main.stats.durationSum / main.stats.durationCount).toFixed(1) : "-";
+    document.getElementById('v_net_aeo').innerText = main.stats.netAEO;
+    document.getElementById('v_rate').innerText = main.stats.total ? ((main.stats.finished / main.stats.total) * 100).toFixed(1) : "-";
+    document.getElementById('v_err').innerText = main.stats.error;
+
+    renderCharts(main, yoy, { latest, prev }, F);
+    return true;
+}
+
+function renderCharts(main, yoy, years, F) {
+    updateFontScale();
+    const axisConf = {
+        axisLabel: { color: '#cbd5e1', fontSize: FS_T },
+        axisLine: { lineStyle: { color: 'rgba(255,255,255,0.2)' } },
+        splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)' } }
+    };
+
+    // --- C1: 最新一年 vs 上一年 同比（按类型分组，按状态堆叠） ---
+    const statusColors = { '已完成': '#4ade80', '认证中': '#fbbf24', '退回': '#f43f5e' };
+    const mainStatuses = ['已完成', '认证中', '退回'];
+    const yrOrder = [years.prev, years.latest];
+    const catCount = Math.max(1, yoy.types.length);
+    const barWidthC1 = catCount <= 2 ? 40 : catCount <= 3 ? 32 : catCount <= 5 ? 24 : 16;
+    const maxTotalC1 = Math.max(1, ...yrOrder.flatMap(y => yoy.types.map(t => mainStatuses.reduce((sum, st) => {
+        const v = (yoy.counts[y] && yoy.counts[y][st] && yoy.counts[y][st][t]) ? yoy.counts[y][st][t] : 0;
+        return sum + v;
+    }, 0))));
+    const yMaxC1 = Math.max(5, Math.ceil((maxTotalC1 * 1.15) / 5) * 5);
+    const axisC1 = {
+        axisLabel: { color: '#e2e8f0', fontSize: FS_N, fontWeight: 700 },
+        axisLine: { lineStyle: { color: 'rgba(255,255,255,0.25)' } },
+        splitLine: { lineStyle: { color: 'rgba(255,255,255,0.06)' } }
+    };
+    const c1InnerLabelMin = 2;
+    const seriesC1 = [];
+    yrOrder.forEach(y => {
+        mainStatuses.forEach(st => {
+            const isLatest = y === years.latest;
+            seriesC1.push({
+                id: `${y} ${st}`,
+                name: st,
+                type: 'bar',
+                stack: String(y),
+                barWidth: barWidthC1,
+                barGap: '45%',
+                barCategoryGap: '50%',
+                // 颜色按状态统一；年份用边框样式区分（虚线=上一年，实线=最新年）
+                itemStyle: {
+                    color: statusColors[st] || '#22d3ee',
+                    opacity: 0.95,
+                    borderWidth: 1,
+                    borderColor: 'rgba(255,255,255,0.28)',
+                    borderType: isLatest ? 'solid' : 'dashed'
+                },
+                label: {
+                    show: true,
+                    position: 'inside',
+                    color: '#06101a',
+                    fontWeight: 900,
+                    fontSize: FS_L,
+                    formatter: (p) => {
+                        const v = Number(p.value || 0);
+                        return v >= c1InnerLabelMin ? v : '';
+                    }
+                },
+                labelLayout: { hideOverlap: true },
+                emphasis: { focus: 'series' },
+                data: yoy.types.map(t => (yoy.counts[y] && yoy.counts[y][st] && yoy.counts[y][st][t]) ? yoy.counts[y][st][t] : 0)
+            });
+        });
+
+        const totals = yoy.types.map(t => mainStatuses.reduce((sum, st) => {
+            const v = (yoy.counts[y] && yoy.counts[y][st] && yoy.counts[y][st][t]) ? yoy.counts[y][st][t] : 0;
+            return sum + v;
+        }, 0));
+        seriesC1.push({
+            id: `${y} 合计`,
+            name: '合计',
+            type: 'bar',
+            stack: String(y),
+            barWidth: barWidthC1,
+            barGap: '45%',
+            barCategoryGap: '50%',
+            itemStyle: { color: 'rgba(0,0,0,0)', borderWidth: 0 },
+            label: {
+                show: true,
+                position: 'top',
+                color: 'rgba(255,255,255,0.92)',
+                fontWeight: 900,
+                fontSize: FS_L,
+                formatter: (p) => {
+                    const total = totals[p.dataIndex] || 0;
+                    return total > 0 ? total : '';
+                }
+            },
+            labelLayout: { hideOverlap: true },
+            tooltip: { show: false },
+            silent: true,
+            data: totals.map(() => 0),
+            z: 5
+        });
+    });
+
+    charts.c1.setOption({
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: { type: 'shadow' },
+            formatter: (items) => {
+                if (!items || !items.length) return '';
+                const axisName = items[0].axisValueLabel || items[0].name || '';
+                const byYear = {};
+                items.forEach(p => {
+                    const idStr = String(p.seriesId || '');
+                    const m = idStr.match(/^(\d{4})\s+(.+)$/);
+                    const y = m ? m[1] : '';
+                    const st = m ? m[2] : (p.seriesName || '');
+                    if (!y) return;
+                    if (!byYear[y]) byYear[y] = {};
+                    byYear[y][st] = { value: p.value, marker: p.marker };
+                });
+                const yearsSorted = Object.keys(byYear).sort((a, b) => Number(b) - Number(a));
+                let html = `${axisName}<br/>`;
+                yearsSorted.forEach(y => {
+                    html += `<span style="color:rgba(255,255,255,0.88);font-weight:800">${y}</span><br/>`;
+                    mainStatuses.forEach(st => {
+                        const it = byYear[y][st];
+                        const v = it ? Number(it.value || 0) : 0;
+                        if (!v) return;
+                        html += `${it.marker}${st}: ${v}<br/>`;
+                    });
+                });
+                return html;
+            }
+        },
+        legend: {
+            show: true,
+            right: 10,
+            top: 22,
+            orient: 'vertical',
+            selectedMode: false,
+            itemWidth: 12,
+            itemHeight: 12,
+            itemGap: 8,
+            textStyle: { color: 'rgba(255,255,255,0.86)', fontSize: FS_T, fontWeight: 700 },
+            data: [
+                { name: '已完成' },
+                { name: '认证中' },
+                { name: '退回' },
+                { name: `虚线边框：${years.prev}`, icon: 'none', textStyle: { color: 'rgba(255,255,255,0.62)', fontSize: FS_S, fontWeight: 500 } },
+                { name: `实线边框：${years.latest}`, icon: 'none', textStyle: { color: 'rgba(255,255,255,0.62)', fontSize: FS_S, fontWeight: 500 } }
+            ]
+        },
+        grid: { top: 22, bottom: 14, left: 12, right: 128, containLabel: true },
+        xAxis: { type: 'category', data: yoy.types, ...axisC1, axisLabel: { ...axisC1.axisLabel, interval: 0 }, axisTick: { alignWithLabel: true } },
+        yAxis: { type: 'value', ...axisC1, max: yMaxC1, minInterval: 1 },
+        series: seriesC1
+    }, true);
+
+    // --- C2: 耗时 ---
+    const distKeys = ['30天内', '45天内', '60天内', '75天内', '90天内', '90天以上'];
+    charts.c2.setOption({
+        grid: { top: 30, bottom: 20, left: 10, right: 10, containLabel: true },
+        tooltip: { trigger: 'axis' },
+        xAxis: { type: 'category', data: distKeys, ...axisConf },
+        yAxis: { type: 'value', ...axisConf },
+        series: [{
+            type: 'bar', data: distKeys.map(k => main.stats.dist[k]), barWidth: '40%',
+            label: { show: true, position: 'top', color: '#fff' },
+            itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#22d3ee' }, { offset: 1, color: 'rgba(34,211,238,0.1)' }]) }
+        }]
+    }, true);
+
+    // --- C3: 热力图 ---
+    const heatData = [];
+    const heatYearsSet = new Set(Object.keys(main.map.heatmap || {}).map(k => String(k).split('-')[0]));
+    heatYearsSet.add(String(years.latest));
+    heatYearsSet.add(String(years.prev));
+    const heatYears = Array.from(heatYearsSet).filter(Boolean).sort((a, b) => Number(b) - Number(a));
+    const t3 = document.getElementById('title-c3');
+    if (t3) {
+        const maxY = heatYears.length ? heatYears[0] : String(years.latest);
+        const minY = heatYears.length ? heatYears[heatYears.length - 1] : String(years.prev);
+        const range = (minY === maxY) ? maxY : `${minY}–${maxY}`;
+        t3.textContent = `月度接收热力监控（口径日期年份：${range}）`;
+    }
+    const heatMonths = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+    Object.keys(main.map.heatmap || {}).forEach(k => {
+        const [y, m] = k.split('-');
+        const yIdx = heatYears.indexOf(y);
+        if (yIdx > -1) heatData.push([parseInt(m, 10) - 1, yIdx, main.map.heatmap[k].length, k]);
+    });
+    const maxVal = Math.max(1, ...heatData.map(d => d[2]));
+    const heatYearTotals = {};
+    heatYears.forEach(y => (heatYearTotals[y] = 0));
+    Object.keys(main.map.heatmap || {}).forEach(k => {
+        const [y] = k.split('-');
+        if (!(y in heatYearTotals)) heatYearTotals[y] = 0;
+        heatYearTotals[y] += (main.map.heatmap[k] || []).length;
+    });
+    const heatGridLeft = Math.max(90, Math.round(FS_N * 6));
+    const heatGridRight = Math.max(90, Math.round(FS_N * 6));
+
+    charts.c3.setOption({
+        tooltip: { position: 'top' },
+        grid: { bottom: 65, top: 10, left: heatGridLeft, right: heatGridRight },
+        visualMap: {
+            min: 0,
+            max: maxVal,
+            calculable: true,
+            orient: 'horizontal',
+            left: 'center', bottom: 0,
+            dimension: 2,
+            inRange: { color: ['#e0f2fe', '#3b82f6', '#f59e0b', '#ef4444'] },
+            textStyle: { color: '#fff' }
+        },
+        xAxis: { type: 'category', data: heatMonths.map(m => m + '月'), ...axisConf, splitArea: { show: true, areaStyle: { color: ['rgba(255,255,255,0.02)', 'rgba(255,255,255,0.05)'] } } },
+        yAxis: [
+            {
+                type: 'category',
+                data: heatYears,
+                axisTick: { show: false },
+                axisLine: { lineStyle: { color: 'rgba(255,255,255,0.2)' } },
+                axisLabel: { color: '#fff', fontSize: FS_N, fontWeight: 900 }
+            },
+            {
+                type: 'category',
+                data: heatYears,
+                position: 'right',
+                axisTick: { show: false },
+                axisLine: { show: false },
+                axisLabel: {
+                    color: '#fff',
+                    fontSize: FS_N,
+                    fontWeight: 900,
+                    formatter: (val) => {
+                        const y = String(val);
+                        const total = heatYearTotals[y] || 0;
+                        return `总:${total}`;
+                    }
+                }
+            }
+        ],
+        series: [{
+            type: 'heatmap', data: heatData,
+            yAxisIndex: 0,
+            label: { show: true, color: '#000', fontSize: FS_N, fontWeight: 900 },
+            itemStyle: { borderColor: '#0f172a', borderWidth: 1 }
+        }]
+    }, true);
+
+    // --- C4: 轮播（效能榜 / 每人作业数） ---
+    startC4Carousel(main.map, axisConf, F);
+
+    // --- C5: 漏斗 ---
+    const funnelData = Object.keys(main.map.funnel).map(k => ({ name: k, value: main.map.funnel[k].length }));
+    funnelData.sort((a, b) => b.value - a.value);
+    charts.c5.setOption({
+        color: techColors,
+        series: [{
+            type: 'funnel', left: '5%', right: '5%', top: '5%', bottom: '5%', sort: 'descending',
+            label: {
+                show: true,
+                position: 'inside',
+                color: '#fff',
+                formatter: (p) => {
+                    const name = String(p.name || '');
+                    const value = (p.value === null || p.value === undefined) ? '' : String(p.value);
+                    if (name === '已完成' || name === '认证中') return `{nBig|${name}}\n{vBig|${value}}`;
+                    return `{n|${name}}\n{v|${value}}`;
+                },
+                rich: {
+                    nBig: { fontSize: FS_L + 4, fontWeight: 900, lineHeight: FS_L + 8 },
+                    vBig: { fontSize: FS_L + 2, fontWeight: 900, lineHeight: FS_L + 6 },
+                    n: { fontSize: FS_N, fontWeight: 800, lineHeight: FS_N + 6 },
+                    v: { fontSize: FS_N, fontWeight: 900, lineHeight: FS_N + 6 }
+                }
+            },
+            data: funnelData
+        }]
+    }, true);
+}
+
+function startC4Carousel(map, axisConf, F) {
+    if (c4RotateTimer) {
+        clearInterval(c4RotateTimer);
+        c4RotateTimer = null;
+    }
+
+    c4Mode = 'team';
+    renderC4Team(map, axisConf, F);
+
+    c4RotateTimer = setInterval(() => {
+        c4Mode = (c4Mode === 'team') ? 'person' : 'team';
+        if (c4Mode === 'team') renderC4Team(map, axisConf, F);
+        else renderC4Person(map, axisConf);
+    }, 10000);
+}
+
+function renderC4Team(map, axisConf, F) {
+    const title = document.getElementById('title-c4');
+    if (title) title.textContent = '各组效能排行榜（平均耗时 / 作业数）';
+
+    const teams = Object.keys(map.teams);
+    const teamArr = teams.map(name => {
+        const arr = map.teams[name] || [];
+        const daysSum = arr.reduce((sum, row) => {
+            const start = parseDate(F.START ? row[F.START] : null);
+            const end = parseDate(F.END ? row[F.END] : null);
+            if (!start || !end) return sum;
+            return sum + (end - start) / 86400000;
+        }, 0);
+        const avg = arr.length ? (daysSum / arr.length) : 0;
+        return { name, avg: Number.isFinite(avg) ? Number(avg.toFixed(1)) : 0, cnt: arr.length };
+    }).sort((a, b) => a.avg - b.avg);
+
+    charts.c4.setOption({
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: { type: 'shadow' },
+            formatter: (params) => {
+                const p = params && params[0];
+                if (!p) return '';
+                const cnt = p.data && p.data.cnt ? p.data.cnt : 0;
+                return `${p.name}<br/>平均耗时：${p.value} 天<br/>作业数：${cnt} 件`;
+            }
+        },
+        grid: { left: 10, right: 70, top: 10, bottom: 0, containLabel: true },
+        xAxis: { type: 'value', ...axisConf, splitLine: { show: false } },
+        yAxis: { type: 'category', data: teamArr.map(t => t.name), axisLabel: { color: '#fff' }, axisTick: { show: false }, axisLine: { show: false } },
+        series: [{
+            type: 'bar',
+            data: teamArr.map(t => ({ value: t.avg, cnt: t.cnt })),
+            barWidth: 14,
+            label: { show: true, position: 'right', color: '#fff', formatter: (p) => `${p.value}天  ${p.data.cnt}件` },
+            itemStyle: { color: '#a855f7', borderRadius: [0, 6, 6, 0] }
+        }]
+    }, true);
+}
+
+function renderC4Person(map, axisConf) {
+    const title = document.getElementById('title-c4');
+    if (title) title.textContent = '每人完成作业数（新申请 / 复核）';
+
+    const agg = {};
+    Object.keys(map.personType || {}).forEach(k => {
+        const [person, type] = k.split('|');
+        if (!person) return;
+        if (!agg[person]) agg[person] = { '新申请': 0, '复核': 0 };
+        if (type === '新申请' || type === '复核') agg[person][type] = map.personType[k].length;
+    });
+
+    const persons = Object.keys(agg).sort((a, b) => {
+        const ta = (agg[a]['新申请'] || 0) + (agg[a]['复核'] || 0);
+        const tb = (agg[b]['新申请'] || 0) + (agg[b]['复核'] || 0);
+        return tb - ta;
+    });
+
+    charts.c4.setOption({
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+        legend: { data: ['新申请', '复核'], textStyle: { color: '#fff' }, top: 0 },
+        grid: { left: 10, right: 60, top: 30, bottom: 0, containLabel: true },
+        xAxis: { type: 'value', ...axisConf, splitLine: { show: false } },
+        yAxis: { type: 'category', data: persons, axisLabel: { color: '#fff' }, axisTick: { show: false }, axisLine: { show: false } },
+        series: [
+            {
+                name: '新申请',
+                type: 'bar',
+                barWidth: 10,
+                data: persons.map(p => agg[p]['新申请'] || 0),
+                label: { show: true, position: 'right', color: '#fff' },
+                itemStyle: { color: '#22d3ee', borderRadius: [0, 6, 6, 0] }
+            },
+            {
+                name: '复核',
+                type: 'bar',
+                barWidth: 10,
+                data: persons.map(p => agg[p]['复核'] || 0),
+                label: { show: true, position: 'right', color: '#fff' },
+                itemStyle: { color: '#10b981', borderRadius: [0, 6, 6, 0] }
+            }
+        ]
+    }, true);
+}
+
+function setupChartEvents() {
+    charts.c1.on('click', params => {
+        const parts = String(params.seriesId || params.seriesName || '').split(' ');
+        const y = parseInt(parts[0], 10);
+        const st = parts.slice(1).join(' ') || String(params.seriesName || '').trim();
+        const type = params.name;
+        const key = `${y}|${st}>${type}`;
+        const rows = (yoyDetailMap && yoyDetailMap.stackBar && yoyDetailMap.stackBar[key]) ? yoyDetailMap.stackBar[key] : [];
+        openModal(`${y}年 ${type} - ${st} 明细`, rows);
+    });
+    charts.c2.on('click', params => { openModal(`耗时分布：${params.name}`, detailMap['dist'][params.name]); });
+    charts.c3.on('click', params => { openModal(`接收热力：${params.data[3]}`, detailMap['heatmap'][params.data[3]]); });
+    charts.c4.on('click', params => {
+        if (c4Mode === 'person') {
+            const person = params.name;
+            const type = params.seriesName;
+            openModal(`个人完成：${person} - ${type}`, detailMap.personType ? detailMap.personType[`${person}|${type}`] : []);
+            return;
+        }
+        openModal(`团队效能：${params.name}`, detailMap['teams'][params.name]);
+    });
+    charts.c5.on('click', params => { openModal(`进度状态：${params.name}`, detailMap['funnel'][params.name]); });
+}
+function showDetail(type) {
+    if (type === 'AvgDays') return alert("平均耗时是计算指标，请点击具体的耗时区间图表查看详情");
+    if (type === 'Rate') return alert("办结率是计算指标，请点击漏斗图查看详情");
+    let titleMap = { 'Total': '总作业量', 'NetAEO': '净增AEO企业', 'Errors': '异常退回' };
+    if (detailMap[type] && detailMap[type].length > 0) openModal(titleMap[type], detailMap[type]);
+    else alert("暂无数据");
+}
+function openModal(title, data) {
+    if (!data || data.length === 0) return;
+    currentModalData = data;
+    document.getElementById('modalTitle').innerText = title + ` (${data.length}条)`;
+    const thead = document.querySelector('#modalTable thead');
+    const tbody = document.querySelector('#modalTable tbody');
+    thead.innerHTML = '';
+    tbody.innerHTML = '';
+    const keys = Object.keys(data[0]);
+    let trH = document.createElement('tr');
+    keys.forEach(k => {
+        let th = document.createElement('th');
+        th.innerText = k;
+        th.title = k; 
+        trH.appendChild(th);
+    });
+    thead.appendChild(trH);
+    data.slice(0, 500).forEach(row => {
+        let tr = document.createElement('tr');
+        keys.forEach(k => {
+            let td = document.createElement('td');
+            let val = row[k];
+            if (val instanceof Date) val = val.toISOString().split('T')[0];
+            td.innerText = val;
+            td.title = val;
+            tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+    });
+    document.getElementById('dataModal').style.display = 'flex';
+}
+function closeModal(e) { if (e.target.id === 'dataModal') document.getElementById('dataModal').style.display = 'none'; }
+function closeModalDirect() { document.getElementById('dataModal').style.display = 'none'; }
+function exportModalData() {
+    if (!currentModalData || currentModalData.length === 0) return;
+    const ws = XLSX.utils.json_to_sheet(currentModalData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Export");
+    XLSX.writeFile(wb, "数据明细导出.xlsx");
+}
+function showMsg(txt) { document.getElementById('status-msg').innerText = txt; }
+function parseDate(v) {
+    if(!v) return null;
+    if(v instanceof Date) return v;
+    if(typeof v === 'number') return new Date((v - 25569) * 86400000);
+    if(typeof v === 'string') {
+        let clean = v.replace(/\./g, '/').replace(/-/g, '/');
+        let d = new Date(clean);
+        return isNaN(d) ? null : d;
+    }
+    return null;
+}
+</script>
+</body>
+</html>
